@@ -1,25 +1,39 @@
+
 import { useEffect, useState } from "react";
 
 const API = "http://localhost:5000/api";
 
 const serviceImages = {
-  barber: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80",
-  beauty: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1000&q=80",
-  photography: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
-  electrician: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=1000&q=80",
-  development: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80",
-  cleaning: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1000&q=80",
-  default: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=80",
+  barber:
+    "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80",
+  beauty:
+    "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1000&q=80",
+  photography:
+    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+  electrician:
+    "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=1000&q=80",
+  development:
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80",
+  cleaning:
+    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1000&q=80",
+  default:
+    "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=80",
 };
 
 function getServiceImage(name = "") {
   const value = name.toLowerCase();
 
   if (/barber|haircut|beard/.test(value)) return serviceImages.barber;
-  if (/beauty|makeup|make-up|nail|cosmetic/.test(value)) return serviceImages.beauty;
-  if (/photo|camera|videograph/.test(value)) return serviceImages.photography;
+  if (/beauty|makeup|make-up|nail|cosmetic/.test(value)) {
+    return serviceImages.beauty;
+  }
+  if (/photo|camera|videograph/.test(value)) {
+    return serviceImages.photography;
+  }
   if (/electric/.test(value)) return serviceImages.electrician;
-  if (/web|develop|program|software|computer/.test(value)) return serviceImages.development;
+  if (/web|develop|program|software|computer/.test(value)) {
+    return serviceImages.development;
+  }
   if (/clean/.test(value)) return serviceImages.cleaning;
 
   return serviceImages.default;
@@ -68,6 +82,15 @@ function App() {
   const [myBookings, setMyBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsError, setBookingsError] = useState("");
+
+  // My Profile state
+  const [profile, setProfile] = useState(null);
+  const [profileName, setProfileName] = useState("");
+  const [profilePhone, setProfilePhone] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMessage, setProfileMessage] = useState("");
+  const [profileError, setProfileError] = useState("");
 
   // Load categories and services
   useEffect(() => {
@@ -134,9 +157,7 @@ function App() {
         throw new Error(result.message || "Failed to load bookings.");
       }
 
-      setMyBookings(
-        Array.isArray(result) ? result : result.data || []
-      );
+      setMyBookings(Array.isArray(result) ? result : result.data || []);
     } catch (err) {
       setBookingsError(err.message || "Unable to retrieve bookings.");
     } finally {
@@ -153,6 +174,99 @@ function App() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, authToken]);
+
+  // Fetch the logged-in user's profile
+  const fetchProfile = async () => {
+    if (!authToken) return;
+
+    setProfileLoading(true);
+    setProfileError("");
+    setProfileMessage("");
+
+    try {
+      const response = await fetch(`${API}/auth/profile`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success || !result.user) {
+        throw new Error(result.message || "Failed to load profile.");
+      }
+
+      setProfile(result.user);
+      setProfileName(result.user.full_name || "");
+      setProfilePhone(result.user.phone || "");
+    } catch (err) {
+      setProfileError(err.message || "Unable to load profile.");
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Update the logged-in user's profile
+  const handleProfileUpdate = async (event) => {
+    event.preventDefault();
+
+    if (!authToken || !currentUser) {
+      setProfileError("Please log in again to update your profile.");
+      return;
+    }
+
+    if (!profileName.trim()) {
+      setProfileError("Full name is required.");
+      return;
+    }
+
+    if (profileName.trim().length > 100 || profilePhone.trim().length > 30) {
+      setProfileError("Please check the length of your name or phone number.");
+      return;
+    }
+
+    setProfileSaving(true);
+    setProfileError("");
+    setProfileMessage("");
+
+    try {
+      const response = await fetch(`${API}/auth/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          full_name: profileName.trim(),
+          phone: profilePhone.trim(),
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success || !result.user) {
+        throw new Error(result.message || "Failed to update profile.");
+      }
+
+      setProfile(result.user);
+      setProfileName(result.user.full_name || "");
+      setProfilePhone(result.user.phone || "");
+
+      const updatedUser = {
+        ...currentUser,
+        ...result.user,
+      };
+
+      localStorage.setItem("proconnect_user", JSON.stringify(updatedUser));
+      setCurrentUser(updatedUser);
+
+      setProfileMessage("Profile updated successfully!");
+    } catch (err) {
+      setProfileError(err.message || "Unable to update profile.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // Login and register
   const handleAuth = async (event) => {
@@ -205,10 +319,7 @@ function App() {
       }
 
       localStorage.setItem("proconnect_token", result.token);
-      localStorage.setItem(
-        "proconnect_user",
-        JSON.stringify(result.user)
-      );
+      localStorage.setItem("proconnect_user", JSON.stringify(result.user));
 
       setAuthToken(result.token);
       setCurrentUser(result.user);
@@ -232,6 +343,12 @@ function App() {
     setBookingMessage("");
     setActiveTab("services");
     setMyBookings([]);
+    setProfile(null);
+    setProfileName("");
+    setProfilePhone("");
+    setProfileError("");
+    setProfileMessage("");
+    setSelectedService(null);
   };
 
   // Create a booking
@@ -239,7 +356,9 @@ function App() {
     event.preventDefault();
 
     if (!currentUser || !authToken) {
-      setBookingMessage("Please log in or create an account to book this service.");
+      setBookingMessage(
+        "Please log in or create an account to book this service."
+      );
       return;
     }
 
@@ -304,7 +423,9 @@ function App() {
 
       if (!response.ok || !result.success) {
         if (response.status === 401 || response.status === 403) {
-          throw new Error("Your session may have expired. Please log in again.");
+          throw new Error(
+            "Your session may have expired. Please log in again."
+          );
         }
 
         throw new Error(result.message || "Failed to create booking.");
@@ -342,6 +463,7 @@ function App() {
   const scrollToAuth = (mode) => {
     setAuthMode(mode);
     setAuthMessage("");
+
     document.getElementById("auth")?.scrollIntoView({
       behavior: "smooth",
     });
@@ -360,7 +482,7 @@ function App() {
             Pro<span className="text-blue-500">Connect</span>
           </button>
 
-          <nav className="flex flex-wrap items-center gap-4 text-sm text-slate-300 md:gap-6">
+          <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-300 md:gap-5">
             <a href="#categories" className="transition hover:text-white">
               Categories
             </a>
@@ -374,20 +496,38 @@ function App() {
             </a>
 
             {currentUser && authToken && (
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("bookings");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className={`rounded-lg px-3 py-2 ${
-                  activeTab === "bookings"
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                My Bookings
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("bookings");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`rounded-lg px-3 py-2 ${
+                    activeTab === "bookings"
+                      ? "bg-blue-600 text-white"
+                      : "hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  My Bookings
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("profile");
+                    fetchProfile();
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`rounded-lg px-3 py-2 ${
+                    activeTab === "profile"
+                      ? "bg-blue-600 text-white"
+                      : "hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  My Profile
+                </button>
+              </>
             )}
           </nav>
 
@@ -429,8 +569,154 @@ function App() {
         </div>
       </header>
 
-      {/* My Bookings */}
-      {activeTab === "bookings" && currentUser && authToken ? (
+      {/* My Profile */}
+      {activeTab === "profile" && currentUser && authToken ? (
+        <main className="mx-auto min-h-[65vh] max-w-7xl px-6 py-12">
+          <div className="mb-8">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
+              Your account
+            </p>
+
+            <h1 className="text-3xl font-bold md:text-4xl">My Profile</h1>
+
+            <p className="mt-3 text-slate-400">
+              Manage your personal information.
+            </p>
+          </div>
+
+          <div className="max-w-2xl rounded-2xl border border-white/10 bg-slate-900 p-6 sm:p-8">
+            {profileLoading && !profile ? (
+              <p className="py-8 text-slate-400">
+                Loading your profile...
+              </p>
+            ) : profileError && !profile ? (
+              <div>
+                <p role="alert" className="text-red-400">
+                  {profileError}
+                </p>
+
+                <button
+                  type="button"
+                  onClick={fetchProfile}
+                  disabled={profileLoading}
+                  className="mt-4 rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500 disabled:opacity-50"
+                >
+                  {profileLoading ? "Loading..." : "Try Again"}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleProfileUpdate} className="space-y-5">
+                <div>
+                  <label
+                    htmlFor="profile-name"
+                    className="mb-2 block text-sm text-slate-300"
+                  >
+                    Full Name
+                  </label>
+
+                  <input
+                    id="profile-name"
+                    type="text"
+                    value={profileName}
+                    onChange={(event) => setProfileName(event.target.value)}
+                    maxLength={100}
+                    required
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-white outline-none focus:border-blue-500"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="profile-email"
+                    className="mb-2 block text-sm text-slate-300"
+                  >
+                    Email Address
+                  </label>
+
+                  <input
+                    id="profile-email"
+                    type="email"
+                    value={profile?.email || currentUser.email || ""}
+                    readOnly
+                    className="w-full cursor-not-allowed rounded-xl border border-white/10 bg-slate-950/60 p-3 text-slate-400"
+                  />
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Your email address cannot be changed here.
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="profile-phone"
+                    className="mb-2 block text-sm text-slate-300"
+                  >
+                    Phone Number
+                  </label>
+
+                  <input
+                    id="profile-phone"
+                    type="tel"
+                    value={profilePhone}
+                    onChange={(event) => setProfilePhone(event.target.value)}
+                    maxLength={30}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-white outline-none focus:border-blue-500"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm text-slate-300">
+                    Account Type
+                  </label>
+
+                  <div className="rounded-xl border border-white/10 bg-slate-950 p-3 capitalize text-slate-300">
+                    {profile?.role || currentUser.role || "User"}
+                  </div>
+                </div>
+
+                {profileError && (
+                  <p role="alert" className="text-sm text-red-400">
+                    {profileError}
+                  </p>
+                )}
+
+                {profileMessage && (
+                  <p role="status" className="text-sm text-green-400">
+                    {profileMessage}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-3 pt-2">
+                  <button
+                    type="submit"
+                    disabled={profileSaving || profileLoading || !profile}
+                    className="rounded-xl bg-blue-600 px-6 py-3 font-semibold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {profileSaving ? "Saving..." : "Save Changes"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileName(profile?.full_name || "");
+                      setProfilePhone(profile?.phone || "");
+                      setProfileError("");
+                      setProfileMessage("");
+                    }}
+                    disabled={profileSaving || !profile}
+                    className="rounded-xl border border-white/10 px-6 py-3 font-semibold hover:bg-white/10 disabled:opacity-50"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </main>
+      ) : activeTab === "bookings" && currentUser && authToken ? (
+        /* My Bookings */
         <main className="mx-auto min-h-[65vh] max-w-7xl px-6 py-12">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -475,9 +761,7 @@ function App() {
             </div>
           ) : myBookings.length === 0 ? (
             <div className="rounded-2xl border border-white/10 bg-slate-900 p-10 text-center">
-              <h2 className="text-xl font-semibold">
-                No bookings yet
-              </h2>
+              <h2 className="text-xl font-semibold">No bookings yet</h2>
 
               <p className="mt-2 text-slate-400">
                 Your bookings will appear here after you book a service.
@@ -611,9 +895,7 @@ function App() {
                 </div>
 
                 {loading ? (
-                  <p className="py-8 text-slate-400">
-                    Loading categories...
-                  </p>
+                  <p className="py-8 text-slate-400">Loading categories...</p>
                 ) : categories.length === 0 ? (
                   <p className="py-8 text-slate-400">
                     No categories available at the moment.
@@ -650,6 +932,7 @@ function App() {
 
                           <div className="absolute inset-x-0 bottom-0 p-6">
                             <h3 className="text-xl font-bold">{name}</h3>
+
                             <p className="mt-2 text-sm text-slate-300">
                               Discover professionals →
                             </p>
@@ -684,6 +967,18 @@ function App() {
                       className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500"
                     >
                       View My Bookings
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveTab("profile");
+                        fetchProfile();
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      className="ml-3 mt-5 rounded-xl border border-white/10 px-6 py-3 font-semibold hover:bg-white/10"
+                    >
+                      My Profile
                     </button>
 
                     <button
@@ -921,7 +1216,8 @@ function App() {
                             </h3>
 
                             <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-6 text-slate-400">
-                              {service.description || "No description available."}
+                              {service.description ||
+                                "No description available."}
                             </p>
 
                             {service.duration_minutes && (
@@ -937,7 +1233,8 @@ function App() {
                                 </p>
 
                                 <p className="mt-1 font-medium text-slate-200">
-                                  {service.professional_name || "Service Provider"}
+                                  {service.professional_name ||
+                                    "Service Provider"}
                                 </p>
                               </div>
 
@@ -987,7 +1284,8 @@ function App() {
                 </h2>
 
                 <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-400">
-                  Explore available services and find the right fit for your needs.
+                  Explore available services and find the right fit for your
+                  needs.
                 </p>
 
                 <a
@@ -1066,11 +1364,15 @@ function App() {
 
             <form onSubmit={handleBooking} className="space-y-5">
               <div>
-                <label className="mb-2 block text-sm text-slate-300">
+                <label
+                  htmlFor="booking-date"
+                  className="mb-2 block text-sm text-slate-300"
+                >
                   Select Date
                 </label>
 
                 <input
+                  id="booking-date"
                   type="date"
                   value={bookingDate}
                   min={new Date().toLocaleDateString("en-CA")}
@@ -1082,12 +1384,16 @@ function App() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm text-slate-300">
+                <label
+                  htmlFor="booking-time"
+                  className="mb-2 block text-sm text-slate-300"
+                >
                   Select Time
                 </label>
 
                 <div className="flex gap-3">
                   <input
+                    id="booking-time"
                     type="text"
                     inputMode="numeric"
                     placeholder="10:30"
@@ -1100,6 +1406,7 @@ function App() {
                   />
 
                   <select
+                    aria-label="AM or PM"
                     value={bookingPeriod}
                     onChange={(event) => setBookingPeriod(event.target.value)}
                     className="w-1/3 rounded-xl border border-white/10 bg-slate-950 p-3 text-white"
@@ -1115,11 +1422,15 @@ function App() {
               </div>
 
               <div>
-                <label className="mb-2 block text-sm text-slate-300">
+                <label
+                  htmlFor="booking-notes"
+                  className="mb-2 block text-sm text-slate-300"
+                >
                   Notes (optional)
                 </label>
 
                 <textarea
+                  id="booking-notes"
                   value={bookingNotes}
                   onChange={(event) => setBookingNotes(event.target.value)}
                   placeholder="Any special requests?"
@@ -1156,9 +1467,16 @@ function App() {
       {/* Footer */}
       <footer className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-8 sm:flex-row sm:items-center sm:justify-between">
-          <a href="#" className="text-xl font-bold">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("services");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="w-fit text-xl font-bold"
+          >
             Pro<span className="text-blue-500">Connect</span>
-          </a>
+          </button>
 
           <p className="text-sm text-slate-500">
             Connecting people with the right professionals.
