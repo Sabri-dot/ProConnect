@@ -476,7 +476,10 @@ function App() {
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5">
           <button
             type="button"
-            onClick={() => setActiveTab("services")}
+            onClick={() => {
+              setActiveTab("services");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
             className="text-2xl font-bold tracking-tight"
           >
             Pro<span className="text-blue-500">Connect</span>
@@ -501,6 +504,7 @@ function App() {
                   type="button"
                   onClick={() => {
                     setActiveTab("bookings");
+                    fetchMyBookings();
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   className={`rounded-lg px-3 py-2 ${
@@ -823,7 +827,7 @@ function App() {
       ) : (
         <>
           <main>
-            {/* Hero */}
+            {/* Hero and Search */}
             <section className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-950/60 via-slate-950 to-slate-950" />
 
@@ -945,51 +949,13 @@ function App() {
               </div>
             </section>
 
-            {/* Authentication */}
-            <section
-              id="auth"
-              className="scroll-mt-10 border-t border-white/10 py-20"
-            >
-              <div className="mx-auto max-w-lg px-6">
-                {currentUser && authToken ? (
-                  <div className="rounded-2xl border border-green-500/20 bg-slate-900 p-8 text-center">
-                    <h2 className="text-2xl font-bold">
-                      Welcome, {currentUser.full_name}!
-                    </h2>
-
-                    <p className="mt-3 text-slate-400">
-                      You are logged in and can book services.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("bookings")}
-                      className="mt-5 rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500"
-                    >
-                      View My Bookings
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveTab("profile");
-                        fetchProfile();
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }}
-                      className="ml-3 mt-5 rounded-xl border border-white/10 px-6 py-3 font-semibold hover:bg-white/10"
-                    >
-                      My Profile
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="ml-3 mt-5 rounded-xl border border-white/10 px-6 py-3 font-semibold hover:bg-white/10"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                ) : (
+            {/* Authentication: only show login/register when logged out */}
+            {!currentUser || !authToken ? (
+              <section
+                id="auth"
+                className="scroll-mt-10 border-t border-white/10 py-20"
+              >
+                <div className="mx-auto max-w-lg px-6">
                   <div className="rounded-2xl border border-white/10 bg-slate-900 p-8">
                     <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
                       ProConnect Account
@@ -1101,9 +1067,9 @@ function App() {
                       </button>
                     </p>
                   </div>
-                )}
-              </div>
-            </section>
+                </div>
+              </section>
+            ) : null}
 
             {/* Services */}
             <section
@@ -1124,6 +1090,23 @@ function App() {
                     <p className="mt-3 text-slate-400">
                       Find the right service for you.
                     </p>
+
+                    {currentUser && authToken && (
+                      <p className="mt-3 text-sm italic text-slate-500">
+                        To check your bookings, click{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveTab("bookings");
+                            fetchMyBookings();
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="font-medium text-blue-400 underline decoration-blue-400/50 underline-offset-4 transition hover:text-blue-300"
+                        >
+                          My Bookings.
+                        </button>{" "}
+                      </p>
+                    )}
                   </div>
 
                   <span className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
