@@ -169,6 +169,130 @@ app.post('/api/services', async (req, res) => {
     });
   }
 });
+
+app.put('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      category_id,
+      title,
+      description,
+      price,
+      duration_minutes,
+    } = req.body;
+
+    if (
+      !Number.isInteger(Number(id)) ||
+      Number(id) <= 0 ||
+      !Number.isInteger(Number(category_id)) ||
+      Number(category_id) <= 0 ||
+      !title?.trim() ||
+      price === undefined ||
+      price === null ||
+      price === '' ||
+      !Number.isFinite(Number(price)) ||
+      Number(price) < 0 ||
+      !Number.isInteger(Number(duration_minutes)) ||
+      Number(duration_minutes) <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or missing service fields.',
+      });
+    }
+
+    const [existing] = await db.query(
+      'SELECT id FROM services WHERE id = ?',
+      [id]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found.',
+      });
+    }
+
+    const [categories] = await db.query(
+      'SELECT id FROM categories WHERE id = ?',
+      [category_id]
+    );
+
+    if (categories.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category not found.',
+      });
+    }
+
+    await db.query(
+      `UPDATE services
+       SET category_id = ?,
+           title = ?,
+           description = ?,
+           price = ?,
+           duration_minutes = ?
+       WHERE id = ?`,
+      [
+        category_id,
+        title.trim(),
+        description || null,
+        Number(price),
+        Number(duration_minutes),
+        id,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: 'Service updated successfully!',
+    });
+  } catch (error) {
+    console.error('Update service error:', error.message);
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update service.',
+    });
+  }
+});
+
+app.delete('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid service ID.',
+      });
+    }
+
+    const [result] = await db.query(
+      'DELETE FROM services WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Service not found.',
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Service deleted successfully!',
+    });
+  } catch (error) {
+    console.error('Delete service error:', error.message);
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete service.',
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`ProConnect API running on port ${PORT}`);
 });
