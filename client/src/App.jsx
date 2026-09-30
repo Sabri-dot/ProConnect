@@ -1,6 +1,40 @@
 
 import { useEffect, useState } from "react";
 
+// Online images — no downloads or images folder needed.
+const serviceImages = {
+  barber:
+    "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80",
+  beauty:
+    "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=1000&q=80",
+  photography:
+    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+  electrician:
+    "https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=1000&q=80",
+  development:
+    "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1000&q=80",
+  cleaning:
+    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1000&q=80",
+  default:
+    "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=80",
+};
+
+function getServiceImage(name = "") {
+  const value = name.toLowerCase();
+
+  if (/barber|haircut|beard/.test(value)) return serviceImages.barber;
+  if (/beauty|makeup|make-up|nail|cosmetic/.test(value))
+    return serviceImages.beauty;
+  if (/photo|camera|videograph/.test(value))
+    return serviceImages.photography;
+  if (/electric/.test(value)) return serviceImages.electrician;
+  if (/web|develop|program|software|computer/.test(value))
+    return serviceImages.development;
+  if (/clean/.test(value)) return serviceImages.cleaning;
+
+  return serviceImages.default;
+}
+
 function App() {
   const [categories, setCategories] = useState([]);
   const [services, setServices] = useState([]);
@@ -88,7 +122,7 @@ function App() {
       </header>
 
       <main>
-        {/* Hero Section */}
+        {/* Hero */}
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-950/60 via-slate-950 to-slate-950" />
 
@@ -101,9 +135,7 @@ function App() {
 
               <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-7xl">
                 Find the Right
-                <span className="block text-blue-500">
-                  Professional
-                </span>
+                <span className="block text-blue-500">Professional</span>
                 for Every Need.
               </h1>
 
@@ -122,21 +154,7 @@ function App() {
                 className="mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur sm:flex-row"
               >
                 <div className="flex flex-1 items-center gap-3 px-3">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="shrink-0 text-slate-400"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                  </svg>
+                  <span className="text-xl text-slate-400">⌕</span>
 
                   <input
                     type="text"
@@ -164,118 +182,77 @@ function App() {
           </div>
         </section>
 
-        {/* Categories Section */}
+        {/* Categories */}
         <section id="categories" className="scroll-mt-10 py-20">
           <div className="mx-auto max-w-7xl px-6">
-            <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-              <div>
-                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
-                  Explore
-                </p>
+            <div className="mb-10">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
+                Explore
+              </p>
 
-                <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-                  Service Categories
-                </h2>
+              <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
+                Service Categories
+              </h2>
 
-                <p className="mt-3 text-slate-400">
-                  Explore services across different professional fields.
-                </p>
-              </div>
-
-              <a
-                href="#services"
-                className="text-sm font-semibold text-blue-400 transition hover:text-blue-300"
-              >
-                Browse all services →
-              </a>
+              <p className="mt-3 text-slate-400">
+                Explore services across different professional fields.
+              </p>
             </div>
 
             {loading ? (
-              <p className="py-8 text-slate-400">
-                Loading categories...
-              </p>
+              <p className="py-8 text-slate-400">Loading categories...</p>
             ) : categories.length === 0 ? (
               <p className="py-8 text-slate-400">
                 No categories available at the moment.
               </p>
             ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => {
-                      setSearch(
-                        category.name || category.title || ""
-                      );
-                      document
-                        .getElementById("services")
-                        ?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className="group rounded-2xl border border-white/10 bg-slate-900/70 p-6 text-left transition hover:-translate-y-1 hover:border-blue-500/50 hover:bg-slate-900"
-                  >
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-xl text-blue-400 transition group-hover:bg-blue-500/20">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect
-                          x="3"
-                          y="3"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
-                        <rect
-                          x="14"
-                          y="3"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
-                        <rect
-                          x="3"
-                          y="14"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
-                        <rect
-                          x="14"
-                          y="14"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
-                      </svg>
-                    </div>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {categories.map((category) => {
+                  const categoryName =
+                    category.name || category.title || "Services";
 
-                    <h3 className="text-lg font-semibold">
-                      {category.name || category.title}
-                    </h3>
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => {
+                        setSearch(categoryName);
+                        document
+                          .getElementById("services")
+                          ?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="group relative h-56 overflow-hidden rounded-2xl border border-white/10 text-left"
+                    >
+                      <img
+                        src={getServiceImage(categoryName)}
+                        alt={categoryName}
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-110"
+                        onError={(event) => {
+                          event.currentTarget.src = serviceImages.default;
+                        }}
+                      />
 
-                    <p className="mt-2 text-sm text-slate-400">
-                      Discover professionals in this category.
-                    </p>
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
 
-                    <span className="mt-5 inline-block text-sm font-medium text-blue-400">
-                      Explore category →
-                    </span>
-                  </button>
-                ))}
+                      <div className="absolute inset-x-0 bottom-0 p-6">
+                        <h3 className="text-xl font-bold">
+                          {categoryName}
+                        </h3>
+
+                        <p className="mt-2 text-sm text-slate-300">
+                          Discover professionals →
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
         </section>
 
-        {/* Services Section */}
+        {/* Services */}
         <section
           id="services"
           className="scroll-mt-10 border-t border-white/10 bg-slate-900/40 py-20"
@@ -311,6 +288,7 @@ function App() {
                 <p className="font-semibold text-red-400">
                   Unable to load services
                 </p>
+
                 <p className="mt-2 text-sm text-slate-400">
                   {error} Please check that the backend server is running.
                 </p>
@@ -318,18 +296,14 @@ function App() {
                 <button
                   type="button"
                   onClick={() => window.location.reload()}
-                  className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold transition hover:bg-blue-500"
+                  className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold hover:bg-blue-500"
                 >
                   Try Again
                 </button>
               </div>
             ) : filteredServices.length === 0 ? (
               <div className="rounded-2xl border border-white/10 bg-slate-900 p-10 text-center">
-                <div className="text-4xl">🔎</div>
-
-                <h3 className="mt-4 text-xl font-semibold">
-                  No services found
-                </h3>
+                <h3 className="text-xl font-semibold">No services found</h3>
 
                 <p className="mt-2 text-slate-400">
                   Try a different search term or check back later.
@@ -339,97 +313,94 @@ function App() {
                   <button
                     type="button"
                     onClick={() => setSearch("")}
-                    className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold transition hover:bg-blue-500"
+                    className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold hover:bg-blue-500"
                   >
                     Clear Search
                   </button>
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredServices.map((service) => (
-                  <article
-                    key={service.id}
-                    className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900 transition hover:-translate-y-1 hover:border-blue-500/40"
-                  >
-                    <div className="flex h-36 items-center justify-center bg-gradient-to-br from-blue-950 via-slate-800 to-slate-900">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-blue-400 transition group-hover:scale-110">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="32"
-                          height="32"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M12 3v18" />
-                          <path d="M5 8h14" />
-                          <path d="M7 8l-4 7h8L7 8Z" />
-                          <path d="M17 8l-4 7h8l-4-7Z" />
-                        </svg>
-                      </div>
-                    </div>
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {filteredServices.map((service) => {
+                  const image = getServiceImage(
+                    `${service.category_name || ""} ${service.title || service.name || ""}`
+                  );
 
-                    <div className="p-6">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
+                  return (
+                    <article
+                      key={service.id}
+                      className="group overflow-hidden rounded-2xl border border-white/10 bg-slate-900 transition duration-300 hover:-translate-y-1 hover:border-blue-500/40"
+                    >
+                      <div className="relative h-56 overflow-hidden">
+                        <img
+                          src={image}
+                          alt={service.title || service.name || "Professional service"}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          onError={(event) => {
+                            event.currentTarget.src = serviceImages.default;
+                          }}
+                        />
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
+
+                        <span className="absolute bottom-4 left-4 rounded-full border border-white/20 bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-white backdrop-blur">
                           {service.category_name || "Professional Service"}
                         </span>
+                      </div>
+
+                      <div className="p-6">
+                        <h3 className="text-xl font-semibold transition group-hover:text-blue-400">
+                          {service.title || service.name}
+                        </h3>
+
+                        <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-6 text-slate-400">
+                          {service.description || "No description available."}
+                        </p>
 
                         {service.duration_minutes && (
-                          <span className="text-xs text-slate-500">
-                            {service.duration_minutes} min
-                          </span>
+                          <p className="mt-3 text-xs text-slate-500">
+                            Duration: {service.duration_minutes} minutes
+                          </p>
                         )}
-                      </div>
 
-                      <h3 className="text-xl font-semibold transition group-hover:text-blue-400">
-                        {service.title || service.name}
-                      </h3>
+                        <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-5">
+                          <div>
+                            <p className="text-xs text-slate-500">
+                              Professional
+                            </p>
 
-                      <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-6 text-slate-400">
-                        {service.description || "No description available."}
-                      </p>
+                            <p className="mt-1 font-medium text-slate-200">
+                              {service.professional_name || "Service Provider"}
+                            </p>
+                          </div>
 
-                      <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-5">
-                        <div>
-                          <p className="text-xs text-slate-500">
-                            Professional
-                          </p>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-500">
+                              Price
+                            </p>
 
-                          <p className="mt-1 font-medium text-slate-200">
-                            {service.professional_name || "Service Provider"}
-                          </p>
+                            <p className="mt-1 text-xl font-bold text-white">
+                              €{Number(service.price || 0).toFixed(2)}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="text-right">
-                          <p className="text-xs text-slate-500">
-                            Starting at
-                          </p>
-
-                          <p className="mt-1 text-xl font-bold text-white">
-                            €{Number(service.price || 0).toFixed(2)}
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            alert(
+                              "Booking functionality will be available soon."
+                            )
+                          }
+                          className="mt-6 w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold transition hover:bg-blue-500"
+                        >
+                          View Service
+                        </button>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          alert(
-                            "Booking functionality will be available soon."
-                          )
-                        }
-                        className="mt-6 w-full rounded-xl border border-blue-500/30 bg-blue-500/10 py-3 text-sm font-semibold text-blue-400 transition hover:bg-blue-600 hover:text-white"
-                      >
-                        View Service
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -437,12 +408,12 @@ function App() {
 
         {/* Call to Action */}
         <section className="px-6 py-20">
-          <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-950 to-slate-900 px-8 py-14 text-center md:px-16">
+          <div className="mx-auto max-w-7xl rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-950 to-slate-900 px-8 py-14 text-center md:px-16">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
               ProConnect
             </p>
 
-            <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight md:text-4xl">
+            <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-bold md:text-4xl">
               The Right Professional Is Just a Search Away.
             </h2>
 
