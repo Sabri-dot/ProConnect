@@ -623,6 +623,52 @@ app.post('/api/bookings', verifyToken, async (req, res) => {
     });
   }
 });
+app.get("/api/bookings/my-bookings", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "Please log in to view your bookings.",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id || decoded.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid authentication token.",
+      });
+    }
+
+    const [bookings] = await db.query(
+      `SELECT
+        b.*,
+        s.title AS service_title
+       FROM bookings b
+       LEFT JOIN services s ON b.service_id = s.id
+       WHERE b.client_id = ?
+       ORDER BY b.booking_date DESC`,
+      [userId]
+    );
+
+    return res.json({
+      success: true,
+      data: bookings,
+    });
+  } catch (error) {
+    console.error("Fetch bookings error:", error);
+
+    return res.status(401).json({
+      success: false,
+      message: "Unable to retrieve bookings.",
+    });
+  }
+});
 
 // =========================
 // START SERVER
