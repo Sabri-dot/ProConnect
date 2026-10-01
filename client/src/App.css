@@ -2351,3 +2351,32 @@
       0 0 20px rgba(34, 211, 238, 0.4);
   }
 }
+/* Premium navbar underline animation */
+.nav-link {
+  position: relative;
+  display: inline-block;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #22d3ee, #3b82f6);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+  border-radius: 999px;
+}
+
+.nav-link:hover {
+  color: #67e8f9;
+}
+
+.nav-link:hover::after {
+  transform: scaleX(1);
+}

@@ -536,17 +536,17 @@ const handleLogout = () => {
           </button>
 
           <nav className="flex flex-wrap items-center gap-3 text-sm text-slate-300 md:gap-5">
-            <a href="#categories" className="transition hover:text-white">
-              Categories
-            </a>
+            <a href="#categories" className="nav-link transition hover:text-white">
+  Categories
+</a>
 
             <a
-              href="#services"
-              onClick={() => setActiveTab("services")}
-              className="transition hover:text-white"
-            >
-              Services
-            </a>
+  href="#services"
+  onClick={() => setActiveTab("services")}
+  className="nav-link transition hover:text-white"
+>
+  Services
+</a>
 
             {currentUser && authToken && (
               <>
@@ -557,11 +557,11 @@ const handleLogout = () => {
                       setActiveTab("admin");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className={`rounded-lg px-3 py-2 ${
-                      activeTab === "admin"
-                        ? "bg-blue-600 text-white"
-                        : "hover:bg-white/10 hover:text-white"
-                    }`}
+                    className={`nav-link rounded-lg px-3 py-2 ${
+  activeTab === "bookings"
+    ? "bg-blue-600 text-white"
+    : "hover:bg-white/10 hover:text-white"
+}`}
                   >
                     Admin Dashboard
                   </button>
@@ -575,11 +575,11 @@ const handleLogout = () => {
                       fetchMyBookings();
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className={`rounded-lg px-3 py-2 ${
-                      activeTab === "bookings"
-                        ? "bg-blue-600 text-white"
-                        : "hover:bg-white/10 hover:text-white"
-                    }`}
+                   className={`nav-link rounded-lg px-3 py-2 ${
+  activeTab === "bookings"
+    ? "bg-blue-600 text-white"
+    : "hover:bg-white/10 hover:text-white"
+}`}
                   >
                     My Bookings
                   </button>
@@ -592,11 +592,11 @@ const handleLogout = () => {
                     fetchProfile();
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className={`rounded-lg px-3 py-2 ${
-                    activeTab === "profile"
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-white/10 hover:text-white"
-                  }`}
+                  className={`nav-link rounded-lg px-3 py-2 ${
+  activeTab === "profile"
+    ? "bg-blue-600 text-white"
+    : "hover:bg-white/10 hover:text-white"
+}`}
                 >
                   My Profile
                 </button>
