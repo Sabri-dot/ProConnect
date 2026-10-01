@@ -136,34 +136,40 @@ function App() {
 
   // Fetch the logged-in user's bookings
   const fetchMyBookings = async () => {
-    if (!authToken) {
-      setMyBookings([]);
-      return;
-    }
+  const currentUser = JSON.parse(
+    localStorage.getItem("proconnect_user") || "null"
+  );
 
-    setBookingsLoading(true);
+  if (!authToken || currentUser?.role !== "client") {
+    setMyBookings([]);
     setBookingsError("");
+    setBookingsLoading(false);
+    return;
+  }
 
-    try {
-      const response = await fetch(`${API}/bookings/my-bookings`, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
+  setBookingsLoading(true);
+  setBookingsError("");
 
-      const result = await response.json();
+  try {
+    const response = await fetch(`${API}/bookings/my-bookings`, {
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
 
-      if (!response.ok || result.success === false) {
-        throw new Error(result.message || "Failed to load bookings.");
-      }
+    const result = await response.json();
 
-      setMyBookings(Array.isArray(result) ? result : result.data || []);
-    } catch (err) {
-      setBookingsError(err.message || "Unable to retrieve bookings.");
-    } finally {
-      setBookingsLoading(false);
+    if (!response.ok || result.success === false) {
+      throw new Error(result.message || "Failed to load bookings.");
     }
-  };
+
+    setMyBookings(Array.isArray(result) ? result : result.data || []);
+  } catch (err) {
+    setBookingsError(err.message || "Unable to retrieve bookings.");
+  } finally {
+    setBookingsLoading(false);
+  }
+};
 
   // Refresh bookings when the login session changes
   useEffect(() => {

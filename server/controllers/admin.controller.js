@@ -194,17 +194,16 @@ async function deleteUser(req, res) {
 async function getAllServices(req, res) {
   try {
     const [services] = await db.query(`
-      SELECT
-        s.id,
-        s.professional_id,
-        s.category_id,
-        s.title,
-        s.description,
-        s.price,
-        s.duration
-      FROM services s
-      ORDER BY s.id DESC
-    `);
+  SELECT
+    s.id,
+    s.professional_id,
+    s.category_id,
+    s.title,
+    s.description,
+    s.price
+  FROM services s
+  ORDER BY s.id DESC
+`);
 
     return res.json({
       success: true,
