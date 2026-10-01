@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import AdminDashboard from "./components/AdminDashboard";
 import "./App.css";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck, LogOut, X } from "lucide-react";
 
 const API = "http://localhost:5000/api";
 
@@ -87,6 +87,7 @@ function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authRole, setAuthRole] = useState("client");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
  const [showAuthPassword, setShowAuthPassword] = useState(false);
   // My Bookings state
   const [myBookings, setMyBookings] = useState([]);
@@ -371,15 +372,18 @@ function App() {
     }
   };
 
+ 
   // Logout
   const handleLogout = () => {
     localStorage.removeItem("proconnect_token");
     localStorage.removeItem("proconnect_user");
 
+    setIsLogoutModalOpen(false);
+    setIsAuthModalOpen(false);
+
     setAuthToken("");
     setCurrentUser(null);
     setAuthMessage("");
-    setIsAuthModalOpen(false);
     setBookingMessage("");
     setActiveTab("services");
     setMyBookings([]);
@@ -598,12 +602,12 @@ function App() {
                 </span>
 
                 <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/10"
-                >
-                  Logout
-                </button>
+  type="button"
+  onClick={() => setIsLogoutModalOpen(true)}
+  className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold transition hover:border-red-400/40 hover:bg-red-500/10 hover:text-red-300"
+>
+  Log out
+</button>
               </>
             ) : (
               <>
@@ -612,7 +616,7 @@ function App() {
                   onClick={() => scrollToAuth("login")}
                   className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold hover:bg-white/10"
                 >
-                  Login
+                  Log in
                 </button>
 
                 <button
@@ -1524,6 +1528,76 @@ function App() {
       )}
 
       {/* Booking Modal */}
+      {/* Premium Logout Confirmation Modal */}
+{isLogoutModalOpen && (
+  <div
+    className="logout-modal-overlay"
+    onMouseDown={(event) => {
+      if (event.target === event.currentTarget) {
+        setIsLogoutModalOpen(false);
+      }
+    }}
+  >
+    <div
+      className="logout-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="logout-modal-title"
+      aria-describedby="logout-modal-description"
+    >
+      <button
+        type="button"
+        className="logout-modal-close"
+        onClick={() => setIsLogoutModalOpen(false)}
+        aria-label="Close confirmation"
+      >
+        <X size={19} />
+      </button>
+
+      <div className="logout-modal-icon">
+        <ShieldCheck size={30} strokeWidth={1.7} />
+      </div>
+
+      <span className="logout-modal-eyebrow">
+        PROCONNECT ACCOUNT
+      </span>
+
+      <h2 id="logout-modal-title">
+        Are you sure you want to log out?
+      </h2>
+
+      <p id="logout-modal-description">
+        You’ll need to sign in again to access your account,
+        bookings, and personal profile.
+      </p>
+
+      <div className="logout-modal-actions">
+        <button
+          type="button"
+          className="logout-cancel-button"
+          onClick={() => setIsLogoutModalOpen(false)}
+          autoFocus
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          className="logout-confirm-button"
+          onClick={handleLogout}
+        >
+          <LogOut size={17} />
+          <span>Log Out</span>
+        </button>
+      </div>
+
+      <div className="logout-modal-footer">
+        <span className="logout-footer-dot" />
+        Your account security matters.
+      </div>
+    </div>
+  </div>
+)}
       {selectedService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4">
           <div className="my-auto w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-6">
@@ -1568,7 +1642,7 @@ function App() {
                     }}
                     className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500"
                   >
-                    Login
+                    Log in
                   </button>
 
                   <button
