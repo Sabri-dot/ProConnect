@@ -48,8 +48,7 @@ export default function ProfessionalServices({
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  
 
   const myServices = useMemo(
     () =>
@@ -60,23 +59,7 @@ export default function ProfessionalServices({
     [services, currentUser?.id]
   );
 
-  const filteredServices = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return myServices.filter((service) => {
-      const matchesSearch =
-        !query ||
-        service.title?.toLowerCase().includes(query) ||
-        service.description?.toLowerCase().includes(query) ||
-        service.location?.toLowerCase().includes(query);
-
-      const matchesCategory =
-        categoryFilter === 'all' ||
-        String(service.category_id) === categoryFilter;
-
-      return matchesSearch && matchesCategory;
-    });
-  }, [myServices, search, categoryFilter]);
+   
 
   const totalValue = useMemo(
     () =>
@@ -624,6 +607,7 @@ export default function ProfessionalServices({
           </form>
         </section>
 
+        
         <section className="ps-list-section">
           <div className="ps-list-header">
             <div>
@@ -631,42 +615,6 @@ export default function ProfessionalServices({
               <h2>Your services</h2>
               <p>Review and manage everything you offer in one place.</p>
             </div>
-
-            <span className="ps-list-count">
-              {myServices.length} {myServices.length === 1 ? 'service' : 'services'}
-            </span>
-          </div>
-
-          <div className="ps-toolbar">
-            <label className="ps-search-box">
-              <span>⌕</span>
-              <input
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search your services..."
-                aria-label="Search your services"
-              />
-            </label>
-
-            <label className="ps-filter-box">
-              <span>Category</span>
-              <select
-                value={categoryFilter}
-                onChange={(event) => setCategoryFilter(event.target.value)}
-                aria-label="Filter services by category"
-              >
-                <option value="all">All categories</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={String(category.id)}>
-                    {category.name ||
-                      category.title ||
-                      category.category_name ||
-                      `Category ${category.id}`}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
 
           {myServices.length === 0 ? (
@@ -681,33 +629,10 @@ export default function ProfessionalServices({
                 Add your first service to showcase your expertise and help
                 customers discover what you offer.
               </p>
-              <button
-                className="ps-button ps-button-primary"
-                type="button"
-                onClick={scrollToEditor}
-              >
-                + Create your first service
-              </button>
-            </div>
-          ) : filteredServices.length === 0 ? (
-            <div className="ps-no-results">
-              <span>⌕</span>
-              <h3>No matching services</h3>
-              <p>Try another search term or select a different category.</p>
-              <button
-                className="ps-button ps-button-quiet"
-                type="button"
-                onClick={() => {
-                  setSearch('');
-                  setCategoryFilter('all');
-                }}
-              >
-                Clear filters
-              </button>
             </div>
           ) : (
             <div className="ps-services-grid">
-              {filteredServices.map((service) => {
+              {myServices.map((service) => {
                 const gallery = Array.isArray(service.images)
                   ? service.images
                   : [];
@@ -724,7 +649,8 @@ export default function ProfessionalServices({
                             loading="lazy"
                           />
                           <span className="ps-gallery-count">
-                            ▧ {gallery.length} {gallery.length === 1 ? 'photo' : 'photos'}
+                            ▧ {gallery.length}{' '}
+                            {gallery.length === 1 ? 'photo' : 'photos'}
                           </span>
                         </>
                       ) : (
