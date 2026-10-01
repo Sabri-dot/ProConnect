@@ -18,5 +18,10 @@ router.patch(
   '/bookings/:id/status',
   bookingController.updateBookingStatus
 );
+router.get("/users", adminController.getAllUsers);
+router.delete("/users/:id", adminController.deleteUser);
+
+router.get("/services", adminController.getAllServices);
+router.delete("/services/:id", adminController.deleteService);
 
 module.exports = router;
