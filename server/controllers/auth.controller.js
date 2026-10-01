@@ -1,119 +1,116 @@
+
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../src/db');
 
 // REGISTER
-async function register(req, res) {
+exports.register = async (req, res) => {
   try {
-    const { full_name, email, password, phone } = req.body;
+    const {
+      full_name,
+      email,
+      password,
+      phone,
+      role = 'client',
+    } = req.body;
 
-    if (
-      typeof full_name !== 'string' ||
-      !full_name.trim() ||
-      typeof email !== 'string' ||
-      !email.trim() ||
-      typeof password !== 'string' ||
-      password.length < 8 ||
-      (phone != null && typeof phone !== 'string')
-    ) {
+    // Validate required fields
+    if (!full_name || !email || !password) {
       return res.status(400).json({
         success: false,
-        message:
-          'Name, email, and a password of at least 8 characters are required.',
+        message: 'Full name, email and password are required.',
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 8 characters long.',
+      });
+    }
 
-    const [existing] = await db.query(
+    // Public registration is allowed only for clients and professionals
+    if (!['client', 'professional'].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid account type.',
+      });
+    }
+
+    // Check if email already exists
+    const [existingUsers] = await db.query(
       'SELECT id FROM users WHERE email = ?',
-      [normalizedEmail]
+      [email]
     );
 
-    if (existing.length > 0) {
+    if (existingUsers.length > 0) {
       return res.status(409).json({
         success: false,
-        message: 'This email is already registered.',
+        message: 'An account with this email already exists.',
       });
     }
 
+    // Hash password
     const passwordHash = await bcrypt.hash(password, 12);
 
+    // Create user
     const [result] = await db.query(
       `INSERT INTO users
-       (full_name, email, password_hash, phone, role)
+        (full_name, email, password_hash, phone, role)
        VALUES (?, ?, ?, ?, ?)`,
       [
         full_name.trim(),
-        normalizedEmail,
+        email.trim().toLowerCase(),
         passwordHash,
-        phone?.trim() || null,
-        'client',
+        phone || null,
+        role,
       ]
     );
 
     return res.status(201).json({
       success: true,
       message: 'Account created successfully.',
-      user: {
-        id: result.insertId,
-        full_name: full_name.trim(),
-        email: normalizedEmail,
-        role: 'client',
+      data: {
+        user: {
+          id: result.insertId,
+          full_name: full_name.trim(),
+          email: email.trim().toLowerCase(),
+          phone: phone || null,
+          role,
+        },
       },
     });
   } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') {
-      return res.status(409).json({
-        success: false,
-        message: 'This email is already registered.',
-      });
-    }
-
-    console.error('Register error:', error.message);
+    console.error('Register error:', error);
 
     return res.status(500).json({
       success: false,
-      message: 'Failed to register.',
+      message: 'Server error during registration.',
     });
   }
-}
+};
 
 // LOGIN
-async function login(req, res) {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (
-      typeof email !== 'string' ||
-      !email.trim() ||
-      typeof password !== 'string' ||
-      !password
-    ) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
         message: 'Email and password are required.',
       });
     }
 
-    if (!process.env.JWT_SECRET) {
-      return res.status(500).json({
-        success: false,
-        message: 'Authentication is not configured.',
-      });
-    }
-
+    // Find user
     const [users] = await db.query(
-      `SELECT id, full_name, email, password_hash, role
+      `SELECT id, full_name, email, password_hash, phone, role
        FROM users
        WHERE email = ?`,
       [email.trim().toLowerCase()]
     );
 
-    if (
-      users.length === 0 ||
-      !(await bcrypt.compare(password, users[0].password_hash))
-    ) {
+    if (users.length === 0) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password.',
@@ -122,37 +119,51 @@ async function login(req, res) {
 
     const user = users[0];
 
+    // Verify password
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password.',
+      });
+    }
+
+    // Create JWT token
     const token = jwt.sign(
       {
         id: user.id,
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: '1d' }
+      {
+        expiresIn: '1d',
+      }
     );
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       message: 'Login successful.',
-      token,
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        role: user.role,
+      data: {
+        token,
+        user: {
+          id: user.id,
+          full_name: user.full_name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+        },
       },
     });
   } catch (error) {
-    console.error('Login error:', error.message);
+    console.error('Login error:', error);
 
     return res.status(500).json({
       success: false,
-      message: 'Login failed.',
+      message: 'Server error during login.',
     });
   }
-}
-
-module.exports = {
-  register,
-  login,
 };

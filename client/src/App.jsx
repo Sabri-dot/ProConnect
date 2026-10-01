@@ -1,5 +1,8 @@
+
 import { useEffect, useState } from "react";
 import AdminDashboard from "./components/AdminDashboard";
+import "./App.css";
+import { Eye, EyeOff } from "lucide-react";
 
 const API = "http://localhost:5000/api";
 
@@ -24,16 +27,21 @@ function getServiceImage(name = "") {
   const value = name.toLowerCase();
 
   if (/barber|haircut|beard/.test(value)) return serviceImages.barber;
+
   if (/beauty|makeup|make-up|nail|cosmetic/.test(value)) {
     return serviceImages.beauty;
   }
+
   if (/photo|camera|videograph/.test(value)) {
     return serviceImages.photography;
   }
+
   if (/electric/.test(value)) return serviceImages.electrician;
+
   if (/web|develop|program|software|computer/.test(value)) {
     return serviceImages.development;
   }
+
   if (/clean/.test(value)) return serviceImages.cleaning;
 
   return serviceImages.default;
@@ -77,7 +85,9 @@ function App() {
   const [authPhone, setAuthPhone] = useState("");
   const [authMessage, setAuthMessage] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-
+  const [authRole, setAuthRole] = useState("client");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+ const [showAuthPassword, setShowAuthPassword] = useState(false);
   // My Bookings state
   const [myBookings, setMyBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
@@ -136,40 +146,46 @@ function App() {
 
   // Fetch the logged-in user's bookings
   const fetchMyBookings = async () => {
-  const currentUser = JSON.parse(
-    localStorage.getItem("proconnect_user") || "null"
-  );
+    let savedUser = null;
 
-  if (!authToken || currentUser?.role !== "client") {
-    setMyBookings([]);
-    setBookingsError("");
-    setBookingsLoading(false);
-    return;
-  }
-
-  setBookingsLoading(true);
-  setBookingsError("");
-
-  try {
-    const response = await fetch(`${API}/bookings/my-bookings`, {
-      headers: {
-        Authorization: `Bearer ${authToken}`,
-      },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok || result.success === false) {
-      throw new Error(result.message || "Failed to load bookings.");
+    try {
+      savedUser = JSON.parse(
+        localStorage.getItem("proconnect_user") || "null"
+      );
+    } catch {
+      savedUser = null;
     }
 
-    setMyBookings(Array.isArray(result) ? result : result.data || []);
-  } catch (err) {
-    setBookingsError(err.message || "Unable to retrieve bookings.");
-  } finally {
-    setBookingsLoading(false);
-  }
-};
+    if (!authToken || savedUser?.role !== "client") {
+      setMyBookings([]);
+      setBookingsError("");
+      setBookingsLoading(false);
+      return;
+    }
+
+    setBookingsLoading(true);
+    setBookingsError("");
+
+    try {
+      const response = await fetch(`${API}/bookings/my-bookings`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || "Failed to load bookings.");
+      }
+
+      setMyBookings(Array.isArray(result) ? result : result.data || []);
+    } catch (err) {
+      setBookingsError(err.message || "Unable to retrieve bookings.");
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
 
   // Refresh bookings when the login session changes
   useEffect(() => {
@@ -226,7 +242,10 @@ function App() {
       return;
     }
 
-    if (profileName.trim().length > 100 || profilePhone.trim().length > 30) {
+    if (
+      profileName.trim().length > 100 ||
+      profilePhone.trim().length > 30
+    ) {
       setProfileError("Please check the length of your name or phone number.");
       return;
     }
@@ -274,6 +293,13 @@ function App() {
     }
   };
 
+  // Open the authentication modal
+  const scrollToAuth = (mode) => {
+    setAuthMode(mode);
+    setAuthMessage("");
+    setIsAuthModalOpen(true);
+  };
+
   // Login and register
   const handleAuth = async (event) => {
     event.preventDefault();
@@ -294,13 +320,14 @@ function App() {
           body: JSON.stringify(
             isRegister
               ? {
-                  full_name: authName,
-                  email: authEmail,
+                  full_name: authName.trim(),
+                  email: authEmail.trim(),
                   password: authPassword,
-                  phone: authPhone,
+                  phone: authPhone.trim(),
+                  role: authRole,
                 }
               : {
-                  email: authEmail,
+                  email: authEmail.trim(),
                   password: authPassword,
                 }
           ),
@@ -309,7 +336,7 @@ function App() {
 
       const result = await response.json();
 
-      if (!response.ok || !result.success) {
+      if (!response.ok || result.success === false) {
         throw new Error(result.message || "Authentication failed.");
       }
 
@@ -320,17 +347,23 @@ function App() {
         return;
       }
 
-      if (!result.token || !result.user) {
-        throw new Error("The server did not return a valid login session.");
+      const token = result.token || result.data?.token;
+      const user = result.user || result.data?.user;
+
+      if (!token || !user) {
+        throw new Error(
+          "The server did not return a valid login session."
+        );
       }
 
-      localStorage.setItem("proconnect_token", result.token);
-      localStorage.setItem("proconnect_user", JSON.stringify(result.user));
+      localStorage.setItem("proconnect_token", token);
+      localStorage.setItem("proconnect_user", JSON.stringify(user));
 
-      setAuthToken(result.token);
-      setCurrentUser(result.user);
+      setAuthToken(token);
+      setCurrentUser(user);
       setAuthPassword("");
       setAuthMessage("Login successful!");
+      setIsAuthModalOpen(false);
     } catch (err) {
       setAuthMessage(err.message || "Something went wrong.");
     } finally {
@@ -346,6 +379,7 @@ function App() {
     setAuthToken("");
     setCurrentUser(null);
     setAuthMessage("");
+    setIsAuthModalOpen(false);
     setBookingMessage("");
     setActiveTab("services");
     setMyBookings([]);
@@ -365,6 +399,11 @@ function App() {
       setBookingMessage(
         "Please log in or create an account to book this service."
       );
+      return;
+    }
+
+    if (currentUser.role !== "client") {
+      setBookingMessage("Only client accounts can book services.");
       return;
     }
 
@@ -430,7 +469,7 @@ function App() {
       if (!response.ok || !result.success) {
         if (response.status === 401 || response.status === 403) {
           throw new Error(
-            "Your session may have expired. Please log in again."
+            "Your session may have expired or your account cannot book services."
           );
         }
 
@@ -466,15 +505,6 @@ function App() {
     );
   });
 
-  const scrollToAuth = (mode) => {
-    setAuthMode(mode);
-    setAuthMessage("");
-
-    document.getElementById("auth")?.scrollIntoView({
-      behavior: "smooth",
-    });
-  };
-
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Navigation */}
@@ -506,37 +536,40 @@ function App() {
 
             {currentUser && authToken && (
               <>
-              {currentUser.role === "admin" && (
-  <button
-    type="button"
-    onClick={() => {
-      setActiveTab("admin");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }}
-    className={`rounded-lg px-3 py-2 ${
-      activeTab === "admin"
-        ? "bg-blue-600 text-white"
-        : "hover:bg-white/10 hover:text-white"
-    }`}
-  >
-    Admin Dashboard
-  </button>
-)}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveTab("bookings");
-                    fetchMyBookings();
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
-                  className={`rounded-lg px-3 py-2 ${
-                    activeTab === "bookings"
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  My Bookings
-                </button>
+                {currentUser.role === "admin" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("admin");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className={`rounded-lg px-3 py-2 ${
+                      activeTab === "admin"
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    Admin Dashboard
+                  </button>
+                )}
+
+                {currentUser.role === "client" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("bookings");
+                      fetchMyBookings();
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className={`rounded-lg px-3 py-2 ${
+                      activeTab === "bookings"
+                        ? "bg-blue-600 text-white"
+                        : "hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    My Bookings
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -595,16 +628,14 @@ function App() {
         </div>
       </header>
 
-      {/* My Profile */}
       {/* Admin Dashboard */}
-{activeTab === "admin" &&
-currentUser &&
-authToken &&
-currentUser.role === "admin" ? (
-  <AdminDashboard
-    onBack={() => setActiveTab("services")}
-  />
-) : activeTab === "profile" && currentUser && authToken ? (
+      {activeTab === "admin" &&
+      currentUser &&
+      authToken &&
+      currentUser.role === "admin" ? (
+        <AdminDashboard onBack={() => setActiveTab("services")} />
+      ) : activeTab === "profile" && currentUser && authToken ? (
+        /* My Profile */
         <main className="mx-auto min-h-[65vh] max-w-7xl px-6 py-12">
           <div className="mb-8">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
@@ -749,7 +780,10 @@ currentUser.role === "admin" ? (
             )}
           </div>
         </main>
-      ) : activeTab === "bookings" && currentUser && authToken ? (
+      ) : activeTab === "bookings" &&
+        currentUser &&
+        authToken &&
+        currentUser.role === "client" ? (
         /* My Bookings */
         <main className="mx-auto min-h-[65vh] max-w-7xl px-6 py-12">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -778,9 +812,7 @@ currentUser.role === "admin" ? (
           </div>
 
           {bookingsLoading ? (
-            <p className="py-8 text-slate-400">
-              Loading your bookings...
-            </p>
+            <p className="py-8 text-slate-400">Loading your bookings...</p>
           ) : bookingsError ? (
             <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6">
               <p className="text-red-400">{bookingsError}</p>
@@ -979,128 +1011,6 @@ currentUser.role === "admin" ? (
               </div>
             </section>
 
-            {/* Authentication: only show login/register when logged out */}
-            {!currentUser || !authToken ? (
-              <section
-                id="auth"
-                className="scroll-mt-10 border-t border-white/10 py-20"
-              >
-                <div className="mx-auto max-w-lg px-6">
-                  <div className="rounded-2xl border border-white/10 bg-slate-900 p-8">
-                    <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
-                      ProConnect Account
-                    </p>
-
-                    <h2 className="mt-3 text-3xl font-bold">
-                      {authMode === "login"
-                        ? "Welcome Back"
-                        : "Create Account"}
-                    </h2>
-
-                    <p className="mt-2 text-slate-400">
-                      {authMode === "login"
-                        ? "Log in to book your preferred services."
-                        : "Register to get started with ProConnect."}
-                    </p>
-
-                    <form onSubmit={handleAuth} className="mt-8 space-y-4">
-                      {authMode === "register" && (
-                        <>
-                          <input
-                            value={authName}
-                            onChange={(event) => setAuthName(event.target.value)}
-                            placeholder="Full name"
-                            autoComplete="name"
-                            required
-                            className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-white"
-                          />
-
-                          <input
-                            type="tel"
-                            value={authPhone}
-                            onChange={(event) => setAuthPhone(event.target.value)}
-                            placeholder="Phone number (optional)"
-                            autoComplete="tel"
-                            className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-white"
-                          />
-                        </>
-                      )}
-
-                      <input
-                        type="email"
-                        value={authEmail}
-                        onChange={(event) => setAuthEmail(event.target.value)}
-                        placeholder="Email address"
-                        autoComplete="email"
-                        required
-                        className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-white"
-                      />
-
-                      <input
-                        type="password"
-                        value={authPassword}
-                        onChange={(event) => setAuthPassword(event.target.value)}
-                        placeholder="Password"
-                        minLength={6}
-                        autoComplete={
-                          authMode === "login"
-                            ? "current-password"
-                            : "new-password"
-                        }
-                        required
-                        className="w-full rounded-xl border border-white/10 bg-slate-950 p-3 text-white"
-                      />
-
-                      {authMessage && (
-                        <p
-                          role="status"
-                          className={
-                            authMessage.includes("successful") ||
-                            authMessage.includes("created")
-                              ? "text-sm text-green-400"
-                              : "text-sm text-blue-300"
-                          }
-                        >
-                          {authMessage}
-                        </p>
-                      )}
-
-                      <button
-                        type="submit"
-                        disabled={authLoading}
-                        className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-50"
-                      >
-                        {authLoading
-                          ? "Please wait..."
-                          : authMode === "login"
-                            ? "Login"
-                            : "Create Account"}
-                      </button>
-                    </form>
-
-                    <p className="mt-6 text-center text-sm text-slate-400">
-                      {authMode === "login"
-                        ? "Don't have an account?"
-                        : "Already have an account?"}{" "}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAuthMode(
-                            authMode === "login" ? "register" : "login"
-                          );
-                          setAuthMessage("");
-                        }}
-                        className="font-semibold text-blue-400 hover:text-blue-300"
-                      >
-                        {authMode === "login" ? "Register" : "Login"}
-                      </button>
-                    </p>
-                  </div>
-                </div>
-              </section>
-            ) : null}
-
             {/* Services */}
             <section
               id="services"
@@ -1121,22 +1031,27 @@ currentUser.role === "admin" ? (
                       Find the right service for you.
                     </p>
 
-                    {currentUser && authToken && (
-                      <p className="mt-3 text-sm italic text-slate-500">
-                        To check your bookings, click{" "}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveTab("bookings");
-                            fetchMyBookings();
-                            window.scrollTo({ top: 0, behavior: "smooth" });
-                          }}
-                          className="font-medium text-blue-400 underline decoration-blue-400/50 underline-offset-4 transition hover:text-blue-300"
-                        >
-                          My Bookings.
-                        </button>{" "}
-                      </p>
-                    )}
+                    {currentUser &&
+                      authToken &&
+                      currentUser.role === "client" && (
+                        <p className="mt-3 text-sm italic text-slate-500">
+                          To check your bookings, click{" "}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("bookings");
+                              fetchMyBookings();
+                              window.scrollTo({
+                                top: 0,
+                                behavior: "smooth",
+                              });
+                            }}
+                            className="font-medium text-blue-400 underline decoration-blue-400/50 underline-offset-4 transition hover:text-blue-300"
+                          >
+                            My Bookings.
+                          </button>
+                        </p>
+                      )}
                   </div>
 
                   <span className="w-fit rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-300">
@@ -1252,9 +1167,7 @@ currentUser.role === "admin" ? (
                               </div>
 
                               <div className="text-right">
-                                <p className="text-xs text-slate-500">
-                                  Price
-                                </p>
+                                <p className="text-xs text-slate-500">Price</p>
 
                                 <p className="mt-1 text-xl font-bold text-white">
                                   €{Number(service.price || 0).toFixed(2)}
@@ -1313,6 +1226,303 @@ currentUser.role === "admin" ? (
         </>
       )}
 
+      {/* Premium Authentication Modal */}
+      {isAuthModalOpen && (!currentUser || !authToken) && (
+        <div
+          className="auth-modal-overlay"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setIsAuthModalOpen(false);
+            }
+          }}
+        >
+          <div
+            className="auth-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="auth-modal-title"
+          >
+            <button
+              type="button"
+              className="auth-modal-close"
+              onClick={() => setIsAuthModalOpen(false)}
+              aria-label="Close authentication modal"
+            >
+              ×
+            </button>
+
+            {/* Form panel */}
+            <div className="auth-modal-form-panel">
+              <div className="auth-brand">
+                <div className="auth-brand-icon">P</div>
+                <span>
+                  Pro<span className="auth-brand-accent">Connect</span>
+                </span>
+              </div>
+
+              <div className="auth-heading">
+                <span className="auth-eyebrow">
+                  {authMode === "login"
+                    ? "WELCOME BACK"
+                    : "JOIN OUR COMMUNITY"}
+                </span>
+
+                <h2 id="auth-modal-title">
+                  {authMode === "login"
+                    ? "Welcome back."
+                    : "Create your account."}
+                </h2>
+
+                <p>
+                  {authMode === "login"
+                    ? "Log in to continue discovering great services."
+                    : "Find the right services or share your professional skills."}
+                </p>
+              </div>
+
+              <form onSubmit={handleAuth} className="auth-modal-form">
+                {authMode === "register" && (
+                  <>
+                    <div className="auth-role-selector">
+                      <label className="auth-role-label">
+                        First, choose your account type
+                      </label>
+
+                      <div className="auth-role-options">
+                        <button
+                          type="button"
+                          aria-pressed={authRole === "client"}
+                          className={`auth-role-option ${
+                            authRole === "client" ? "active" : ""
+                          }`}
+                          onClick={() => setAuthRole("client")}
+                        >
+                          <span className="auth-role-icon">👤</span>
+
+                          <span className="auth-role-title">
+                            I'm a Client
+                          </span>
+
+                          <span className="auth-role-description">
+                            Discover services and book appointments.
+                          </span>
+
+                          <span className="auth-role-check">
+                            {authRole === "client" ? "✓" : ""}
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          aria-pressed={authRole === "professional"}
+                          className={`auth-role-option ${
+                            authRole === "professional" ? "active" : ""
+                          }`}
+                          onClick={() => setAuthRole("professional")}
+                        >
+                          <span className="auth-role-icon professional-icon">
+                            💼
+                          </span>
+
+                          <span className="auth-role-title">
+                            I'm a Professional
+                          </span>
+
+                          <span className="auth-role-description">
+                            Showcase your skills and reach new clients.
+                          </span>
+
+                          <span className="auth-role-check">
+                            {authRole === "professional" ? "✓" : ""}
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="auth-field">
+                      <label htmlFor="auth-name">Full name</label>
+                      <input
+                        id="auth-name"
+                        type="text"
+                        value={authName}
+                        onChange={(event) => setAuthName(event.target.value)}
+                        placeholder="Enter your full name"
+                        autoComplete="name"
+                        maxLength={100}
+                        required
+                      />
+                    </div>
+
+                    <div className="auth-field">
+                      <label htmlFor="auth-phone">
+                        Phone number <span>(optional)</span>
+                      </label>
+                      <input
+                        id="auth-phone"
+                        type="tel"
+                        value={authPhone}
+                        onChange={(event) => setAuthPhone(event.target.value)}
+                        placeholder="Enter your phone number"
+                        autoComplete="tel"
+                        maxLength={30}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="auth-field">
+                  <label htmlFor="auth-email">Email address</label>
+                  <input
+                    id="auth-email"
+                    type="email"
+                    value={authEmail}
+                    onChange={(event) => setAuthEmail(event.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+
+                <div className="auth-field">
+                  <label htmlFor="auth-password">Password</label>
+                  <div className="auth-password-wrapper">
+  <input
+    id="auth-password"
+    type={showAuthPassword ? "text" : "password"}
+    value={authPassword}
+    onChange={(event) => setAuthPassword(event.target.value)}
+    placeholder="Enter your password"
+    required
+  />
+
+  <button
+    type="button"
+    className="auth-password-toggle"
+    onClick={() => setShowAuthPassword((previous) => !previous)}
+    aria-label={showAuthPassword ? "Hide password" : "Show password"}
+    title={showAuthPassword ? "Hide password" : "Show password"}
+  >
+    {showAuthPassword ? (
+  <EyeOff size={19} strokeWidth={1.8} />
+) : (
+  <Eye size={19} strokeWidth={1.8} />
+)}
+  </button>
+</div>
+                </div>
+
+                {authMessage && (
+                  <div
+                    role="status"
+                    className={`auth-feedback ${
+                      authMessage.includes("successful") ||
+                      authMessage.includes("created")
+                        ? "success"
+                        : "error"
+                    }`}
+                  >
+                    {authMessage}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={authLoading}
+                  className="auth-submit-button"
+                >
+                  {authLoading
+                    ? "Please wait..."
+                    : authMode === "login"
+                      ? "Log In to ProConnect"
+                      : "Create My Account"}
+
+                  {!authLoading && <span aria-hidden="true">→</span>}
+                </button>
+
+                <p className="auth-switch">
+                  {authMode === "login"
+                    ? "Don't have an account?"
+                    : "Already have an account?"}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode(
+                        authMode === "login" ? "register" : "login"
+                      );
+                      setAuthMessage("");
+                    }}
+                  >
+                    {authMode === "login" ? "Create account" : "Log in"}
+                  </button>
+                </p>
+
+                <p className="auth-secure-note">
+                  <span aria-hidden="true">✦</span>
+                  Your next opportunity starts here.
+                </p>
+              </form>
+            </div>
+
+            {/* Presentation panel */}
+            <aside className="auth-modal-aside">
+              <div className="auth-aside-orb auth-orb-one" />
+              <div className="auth-aside-orb auth-orb-two" />
+
+              <div className="auth-aside-content">
+                <span className="auth-aside-badge">
+                  ✦ THE PROCONNECT EXPERIENCE
+                </span>
+
+                <h3>
+                  Your skills.
+                  <br />
+                  Your people.
+                  <br />
+                  <span>Your next opportunity.</span>
+                </h3>
+
+                <p>
+                  One place to discover talented professionals, build
+                  connections and make things happen.
+                </p>
+
+                <div className="auth-benefits">
+                  <div className="auth-benefit">
+                    <span className="auth-benefit-icon">✓</span>
+                    <div>
+                      <strong>Simple discovery</strong>
+                      <p>Find services that fit your needs.</p>
+                    </div>
+                  </div>
+
+                  <div className="auth-benefit">
+                    <span className="auth-benefit-icon">↗</span>
+                    <div>
+                      <strong>New opportunities</strong>
+                      <p>Help your professional work get noticed.</p>
+                    </div>
+                  </div>
+
+                  <div className="auth-benefit">
+                    <span className="auth-benefit-icon">◎</span>
+                    <div>
+                      <strong>Built for connection</strong>
+                      <p>Bring clients and professionals together.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="auth-aside-footer">
+                <span className="auth-footer-dot" />
+                Discover. Connect. Grow.
+              </div>
+            </aside>
+          </div>
+        </div>
+      )}
+
       {/* Booking Modal */}
       {selectedService && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/80 p-4">
@@ -1343,7 +1553,7 @@ currentUser.role === "admin" ? (
               </button>
             </div>
 
-            {(!currentUser || !authToken) && (
+            {!currentUser || !authToken ? (
               <div className="mb-5 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4">
                 <p className="text-sm text-blue-200">
                   Please log in or register to book this service.
@@ -1373,7 +1583,13 @@ currentUser.role === "admin" ? (
                   </button>
                 </div>
               </div>
-            )}
+            ) : currentUser.role !== "client" ? (
+              <div className="mb-5 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
+                <p className="text-sm text-amber-200">
+                  Only client accounts can book services.
+                </p>
+              </div>
+            ) : null}
 
             <form onSubmit={handleBooking} className="space-y-5">
               <div>
@@ -1467,7 +1683,12 @@ currentUser.role === "admin" ? (
 
               <button
                 type="submit"
-                disabled={bookingLoading || !currentUser || !authToken}
+                disabled={
+                  bookingLoading ||
+                  !currentUser ||
+                  !authToken ||
+                  currentUser.role !== "client"
+                }
                 className="w-full rounded-xl bg-blue-600 py-3 font-semibold hover:bg-blue-500 disabled:opacity-50"
               >
                 {bookingLoading ? "Booking..." : "Confirm Booking"}
