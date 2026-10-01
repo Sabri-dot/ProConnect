@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import AdminDashboard from "./components/AdminDashboard";
+import ProfessionalServices from "./components/ProfessionalServices";
 import "./App.css";
 import { Eye, EyeOff, ShieldCheck, LogOut, X } from "lucide-react";
 
@@ -145,6 +146,22 @@ function App() {
 
     fetchData();
   }, []);
+
+  
+  // Refresh services after creating, editing, or deleting a service
+  const refreshServices = async () => {
+    const response = await fetch(`${API}/services`);
+
+    if (!response.ok) {
+      throw new Error("Unable to refresh services.");
+    }
+
+    const result = await response.json();
+
+    setServices(
+      Array.isArray(result) ? result : result.data || []
+    );
+  };
 
   // Fetch the logged-in user's bookings
   const fetchMyBookings = async () => {
@@ -557,6 +574,22 @@ const filteredServices = services.filter((service) => {
 
             {currentUser && authToken && (
               <>
+              {currentUser.role === "professional" && (
+  <button
+    type="button"
+    onClick={() => {
+      setActiveTab("professional-services");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }}
+    className={`nav-link rounded-lg px-3 py-2 ${
+      activeTab === "professional-services"
+        ? "bg-blue-600 text-white"
+        : "hover:bg-white/10 hover:text-white"
+    }`}
+  >
+    My Services
+  </button>
+)}
                 {currentUser.role === "admin" && (
                   <button
                     type="button"
@@ -649,13 +682,26 @@ const filteredServices = services.filter((service) => {
         </div>
       </header>
 
+      
       {/* Admin Dashboard */}
       {activeTab === "admin" &&
       currentUser &&
       authToken &&
       currentUser.role === "admin" ? (
         <AdminDashboard onBack={() => setActiveTab("services")} />
+      ) : activeTab === "professional-services" &&
+        currentUser &&
+        authToken &&
+        currentUser.role === "professional" ? (
+        <ProfessionalServices
+          categories={categories}
+          services={services}
+          currentUser={currentUser}
+          authToken={authToken}
+          refreshServices={refreshServices}
+        />
       ) : activeTab === "profile" && currentUser && authToken ? (
+
         /* My Profile */
         <main className="mx-auto min-h-[65vh] max-w-7xl px-6 py-12">
           <div className="mb-8">
