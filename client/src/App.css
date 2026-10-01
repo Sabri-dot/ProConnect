@@ -2141,3 +2141,213 @@
     transition: none;
   }
 }
+
+/* ========================================
+   PROCONNECT — PREMIUM LOGOUT TOAST
+======================================== */
+
+.logout-toast {
+  position: fixed;
+  top: 26px;
+  right: 26px;
+  z-index: 99999;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+
+  width: min(430px, calc(100vw - 32px));
+  padding: 21px 42px 24px 19px;
+
+  overflow: hidden;
+  isolation: isolate;
+
+  color: #f8fafc;
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(59, 130, 246, 0.17),
+      transparent 58%
+    ),
+    rgba(12, 19, 35, 0.96);
+
+  border: 1px solid rgba(96, 165, 250, 0.24);
+  border-radius: 20px;
+
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.38),
+    0 0 35px rgba(59, 130, 246, 0.09);
+
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+
+  animation: logoutToastEnter 0.4s
+    cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.logout-toast-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  width: 43px;
+  height: 43px;
+
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.2);
+  border-radius: 14px;
+}
+
+.logout-toast-content {
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.logout-toast-content h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: -0.2px;
+  color: #f8fafc;
+}
+
+.logout-toast-content p {
+  margin: 0;
+  color: #a8b5ca;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.logout-toast-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  display: grid;
+  place-items: center;
+
+  width: 27px;
+  height: 27px;
+  padding: 0;
+
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.logout-toast-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.logout-toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+
+  width: 100%;
+  height: 3px;
+
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #60a5fa,
+    #93c5fd
+  );
+
+  transform-origin: left;
+  animation: logoutToastProgress 4s linear forwards;
+}
+
+@keyframes logoutToastEnter {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, -8px, 0) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes logoutToastProgress {
+  from {
+    transform: scaleX(1);
+  }
+
+  to {
+    transform: scaleX(0);
+  }
+}
+
+/* Mobile layout */
+@media (max-width: 520px) {
+  .logout-toast {
+    top: 14px;
+    right: 12px;
+    width: calc(100vw - 24px);
+    padding: 17px 37px 20px 15px;
+    gap: 11px;
+    border-radius: 16px;
+  }
+
+  .logout-toast-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+  }
+
+  .logout-toast-content h3 {
+    font-size: 13px;
+  }
+
+  .logout-toast-content p {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logout-toast,
+  .logout-toast-progress {
+    animation: none;
+  }
+}
+.service-login-note-link {
+  position: relative;
+  display: inline-block;
+  color: #67e8f9;
+  font-weight: 700;
+  cursor: pointer;
+  animation: loginShine 2s ease-in-out infinite;
+  transition: color 0.3s ease;
+}
+
+.service-login-note-link:hover {
+  color: #ffffff;
+  text-shadow:
+    0 0 6px #67e8f9,
+    0 0 14px #22d3ee,
+    0 0 22px rgba(34, 211, 238, 0.8);
+}
+
+@keyframes loginShine {
+  0%, 100% {
+    text-shadow: 0 0 3px rgba(103, 232, 249, 0.3);
+  }
+
+  50% {
+    text-shadow:
+      0 0 6px rgba(103, 232, 249, 0.9),
+      0 0 14px rgba(34, 211, 238, 0.7),
+      0 0 20px rgba(34, 211, 238, 0.4);
+  }
+}

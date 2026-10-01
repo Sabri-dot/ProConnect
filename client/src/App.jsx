@@ -88,7 +88,8 @@ function App() {
   const [authRole, setAuthRole] = useState("client");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
- const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [logoutToast, setLogoutToast] = useState(false);
   // My Bookings state
   const [myBookings, setMyBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
@@ -374,26 +375,35 @@ function App() {
 
  
   // Logout
-  const handleLogout = () => {
-    localStorage.removeItem("proconnect_token");
-    localStorage.removeItem("proconnect_user");
+  
+const handleLogout = () => {
+  localStorage.removeItem("proconnect_token");
+  localStorage.removeItem("proconnect_user");
 
-    setIsLogoutModalOpen(false);
-    setIsAuthModalOpen(false);
+  // Close modals immediately
+  setIsLogoutModalOpen(false);
+  setIsAuthModalOpen(false);
 
-    setAuthToken("");
-    setCurrentUser(null);
-    setAuthMessage("");
-    setBookingMessage("");
-    setActiveTab("services");
-    setMyBookings([]);
-    setProfile(null);
-    setProfileName("");
-    setProfilePhone("");
-    setProfileError("");
-    setProfileMessage("");
-    setSelectedService(null);
-  };
+  // Show success notification
+  setLogoutToast(true);
+  setTimeout(() => {
+    setLogoutToast(false);
+  }, 4000);
+
+  // Reset authentication and user data
+  setAuthToken("");
+  setCurrentUser(null);
+  setAuthMessage("");
+  setBookingMessage("");
+  setActiveTab("services");
+  setMyBookings([]);
+  setProfile(null);
+  setProfileName("");
+  setProfilePhone("");
+  setProfileError("");
+  setProfileMessage("");
+  setSelectedService(null);
+};
 
   // Create a booking
   const handleBooking = async (event) => {
@@ -1034,6 +1044,31 @@ function App() {
                     <p className="mt-3 text-slate-400">
                       Find the right service for you.
                     </p>
+                    
+                    {!currentUser && !authToken && (
+  <div className="service-login-note">
+    <span className="service-login-note-dot" />
+
+    <p>
+      <span className="service-login-note-label">
+        Ready to book?
+      </span>{" "}
+
+      <span className="service-login-note-message">
+  <button
+    type="button"
+    onClick={() => scrollToAuth("login")}
+    className="service-login-note-link"
+  >
+    Log in
+  </button>{" "}
+  to book your next service.
+</span>
+
+  
+    </p>
+  </div>
+)}
 
                     {currentUser &&
                       authToken &&
@@ -1769,6 +1804,37 @@ function App() {
               </button>
             </form>
           </div>
+        </div>
+      )}
+      
+      {/* Premium Logout Success Toast */}
+      {logoutToast && (
+        <div
+          className="logout-toast"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="logout-toast-icon">
+            <ShieldCheck size={23} strokeWidth={1.8} />
+          </div>
+
+          <div className="logout-toast-content">
+            <h3>You’ve been logged out successfully</h3>
+            <p>
+              Log in again anytime to book your next service.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="logout-toast-close"
+            onClick={() => setLogoutToast(false)}
+            aria-label="Dismiss notification"
+          >
+            <X size={17} />
+          </button>
+
+          <div className="logout-toast-progress" />
         </div>
       )}
 
