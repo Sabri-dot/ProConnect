@@ -508,17 +508,24 @@ const handleLogout = () => {
   };
 
   // Search services
-  const filteredServices = services.filter((service) => {
-    const term = search.toLowerCase();
+ 
+const normalizedSearch = search.trim().toLowerCase();
 
-    return (
-      service.title?.toLowerCase().includes(term) ||
-      service.name?.toLowerCase().includes(term) ||
-      service.professional_name?.toLowerCase().includes(term) ||
-      service.category_name?.toLowerCase().includes(term)
-    );
-  });
+const filteredServices = services.filter((service) => {
+  const searchableFields = [
+    service.title,
+    service.name,
+    service.description,
+    service.professional_name,
+    service.category_name,
+  ];
 
+  return searchableFields.some((field) =>
+    String(field || "")
+      .toLowerCase()
+      .includes(normalizedSearch)
+  );
+});
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       {/* Navigation */}
@@ -936,12 +943,45 @@ const handleLogout = () => {
                     }}
                     className="mt-10 flex max-w-2xl flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur sm:flex-row"
                   >
-                    <input
-                      value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Search for a service or professional..."
-                      className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm outline-none placeholder:text-slate-500"
-                    />
+                   
+<div className="flex min-w-0 flex-1 items-center gap-3 px-3">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="shrink-0 text-slate-400"
+    aria-hidden="true"
+  >
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.35-4.35" />
+  </svg>
+
+  <input
+    type="text"
+    value={search}
+    onChange={(event) => setSearch(event.target.value)}
+    placeholder="Search services, professionals..."
+    aria-label="Search services and professionals"
+   className="min-w-0 flex-1 bg-transparent py-3 pl-2 text-sm text-white outline-none placeholder:text-slate-500"
+  />
+
+  {search && (
+    <button
+      type="button"
+      onClick={() => setSearch("")}
+      aria-label="Clear search"
+      className="shrink-0 rounded-full p-1 text-slate-400 transition hover:bg-white/10 hover:text-white"
+    >
+      <X size={18} />
+    </button>
+  )}
+</div>
 
                     <button className="rounded-xl bg-blue-600 px-7 py-3 font-semibold transition hover:bg-blue-500">
                       Search Services
