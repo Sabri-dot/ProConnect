@@ -1,5 +1,5 @@
-
 import { useEffect, useState } from "react";
+import AdminDashboard from "./components/AdminDashboard";
 
 const API = "http://localhost:5000/api";
 
@@ -500,6 +500,22 @@ function App() {
 
             {currentUser && authToken && (
               <>
+              {currentUser.role === "admin" && (
+  <button
+    type="button"
+    onClick={() => {
+      setActiveTab("admin");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }}
+    className={`rounded-lg px-3 py-2 ${
+      activeTab === "admin"
+        ? "bg-blue-600 text-white"
+        : "hover:bg-white/10 hover:text-white"
+    }`}
+  >
+    Admin Dashboard
+  </button>
+)}
                 <button
                   type="button"
                   onClick={() => {
@@ -574,7 +590,15 @@ function App() {
       </header>
 
       {/* My Profile */}
-      {activeTab === "profile" && currentUser && authToken ? (
+      {/* Admin Dashboard */}
+{activeTab === "admin" &&
+currentUser &&
+authToken &&
+currentUser.role === "admin" ? (
+  <AdminDashboard
+    onBack={() => setActiveTab("services")}
+  />
+) : activeTab === "profile" && currentUser && authToken ? (
         <main className="mx-auto min-h-[65vh] max-w-7xl px-6 py-12">
           <div className="mb-8">
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
